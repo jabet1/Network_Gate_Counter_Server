@@ -7,7 +7,7 @@ var fs = require('fs');
 var date = new Date();
 let peopleInside = 0;
 
-fs.readdir('./log/', (err, files) => {
+fs.readdir('./log/', (err, files) => { //get old value
   if(files == ''){
     peopleInside = 0;
     return true;
@@ -38,7 +38,7 @@ fs.readdir('./log/', (err, files) => {
 var winston = require('winston');
 require('winston-daily-rotate-file');
 
-var logger = winston.createLogger({
+var logger = winston.createLogger({ //create 2 logs files
     transports: [
       new (winston.transports.DailyRotateFile)({
           level: 'info',
@@ -72,14 +72,14 @@ const checkMinPeopleInside = () =>{
 }
 
 app.get('/', function(req, res){
-  res.send('hello');
+  res.send('Hello');
 });
 
 io.on('connection', (socket) => {
   socket.emit('peopleInside', {peopleInside});
   socket.emit('maxPeopleInside', config.maxPeopleInside);
 
-  socket.on('+', function (data) {
+  socket.on('+', function (data) { // someone get out
     if(data != undefined){
       if(data == config.password){
         const date = new Date();
@@ -92,7 +92,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('-', function (data) {
+  socket.on('-', function (data) { // someone get in
     if(data != undefined){
       if(data == config.password){
         const date = new Date();
@@ -105,12 +105,14 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('exitedWhileDisconnected', function (data) {
-    peopleInside = peopleInside - data;
-    logger.info(`${date.toString()} / exitedWhileDisconnected / ${data} exited while server was disconnected. Now ${peopleInside} people inside`);
-    checkMinPeopleInside();
-    socket.emit('peopleInside', {peopleInside});
-    socket.broadcast.emit('peopleInside', {"peopleInside": peopleInside});
+  socket.on('exitedWhileDisconnected', function (data) { //people who get out while server or phone were disconnected
+    if(data != undefined){
+      peopleInside = peopleInside - data;
+      logger.info(`${date.toString()} / exitedWhileDisconnected / ${data} exited while server was disconnected. Now ${peopleInside} people inside`);
+      checkMinPeopleInside();
+      socket.emit('peopleInside', {peopleInside});
+      socket.broadcast.emit('peopleInside', {"peopleInside": peopleInside});
+    }
   });
 
 });

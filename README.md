@@ -27,13 +27,13 @@ Install the node modules :
 
     npm install
 
-Modifiy the config.js file to correspond yours needs :
+Modify the config.js file to fit your needs :
 
  - Port
  - Password
- - People Maximum in the building (triger alert on phones and logs)
+ - Maximum People in the building (trigger alert on phones and logs)
 
-You need to restart the server for modification to take effect.
+You need to restart the server for modifications to take effect.
 ## Admin
 
 
@@ -52,4 +52,4 @@ See statut :
 
     pm2 ls
 
-(more command [here](https://pm2.keymetrics.io/docs/usage/pm2-doc-single-page/#managing-processes))
+(more commands [here](https://pm2.keymetrics.io/docs/usage/pm2-doc-single-page/#managing-processes))

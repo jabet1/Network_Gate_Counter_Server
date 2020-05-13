@@ -1,8 +1,13 @@
-var app = require('express')();
+var express = require('express')
+var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var config = require('./config');
 var fs = require('fs');
+var path = require('path')
+
+app.use(express.static('public'))
+
 
 var date = new Date();
 let peopleInside = 0;
@@ -72,7 +77,8 @@ const checkMinPeopleInside = () =>{
 }
 
 app.get('/', function(req, res){
-  res.send('Hello');
+  res.sendFile(__dirname + '/index.html');
+  //res.send('Hello ' + peopleInside );
 });
 
 io.on('connection', (socket) => {
@@ -81,37 +87,69 @@ io.on('connection', (socket) => {
 
   socket.on('+', function (data) { // someone get out
     if(data != undefined){
-      if(data == config.password){
-        const date = new Date();
-        peopleInside = peopleInside + 1
-        socket.emit('peopleInside', {"peopleInside": peopleInside});
-        socket.broadcast.emit('peopleInside', {"peopleInside": peopleInside});
-        logger.info(`${date.toString()} / enter / ${peopleInside} people inside`);
-        checkMaxPeopleInside();
+      if(data.password != undefined){
+        if(data.password == config.password){
+          const date = new Date();
+          peopleInside = peopleInside + 1
+          socket.emit('peopleInside', {"peopleInside": peopleInside});
+          socket.broadcast.emit('peopleInside', {"peopleInside": peopleInside});
+          logger.info(`${date.toString()} / enter from :${data.nomSmartphone} / ${peopleInside} people inside`);
+          checkMaxPeopleInside();
+        }
+      }else{
+        if(data == config.password){
+          const date = new Date();
+          peopleInside = peopleInside + 1
+          socket.emit('peopleInside', {"peopleInside": peopleInside});
+          socket.broadcast.emit('peopleInside', {"peopleInside": peopleInside});
+          logger.info(`${date.toString()} / enter / ${peopleInside} people inside`);
+          checkMaxPeopleInside();
+        }
       }
     }
   });
 
   socket.on('-', function (data) { // someone get in
     if(data != undefined){
-      if(data == config.password){
-        const date = new Date();
-        peopleInside = peopleInside - 1
-        checkMinPeopleInside();
-        socket.emit('peopleInside', {"peopleInside": peopleInside});
-        socket.broadcast.emit('peopleInside', {"peopleInside": peopleInside});
-        logger.info(`${date.toString()} / exit / ${peopleInside} people inside`);
+      if(data.password != undefined){
+        if(data.password == config.password){
+          const date = new Date();
+          peopleInside = peopleInside - 1
+          checkMinPeopleInside();
+          socket.emit('peopleInside', {"peopleInside": peopleInside});
+          socket.broadcast.emit('peopleInside', {"peopleInside": peopleInside});
+          logger.info(`${date.toString()} / exit from :${data.nomSmartphone} / ${peopleInside} people inside`);
+        }
+      }else{
+        if(data == config.password){
+          const date = new Date();
+          peopleInside = peopleInside - 1
+          checkMinPeopleInside();
+          socket.emit('peopleInside', {"peopleInside": peopleInside});
+          socket.broadcast.emit('peopleInside', {"peopleInside": peopleInside});
+          logger.info(`${date.toString()} / exit / ${peopleInside} people inside`);
+        }
       }
     }
   });
 
   socket.on('exitedWhileDisconnected', function (data) { //people who get out while server or phone were disconnected
     if(data != undefined){
-      peopleInside = peopleInside - data;
-      logger.info(`${date.toString()} / exitedWhileDisconnected / ${data} exited while server was disconnected. Now ${peopleInside} people inside`);
-      checkMinPeopleInside();
-      socket.emit('peopleInside', {peopleInside});
-      socket.broadcast.emit('peopleInside', {"peopleInside": peopleInside});
+      if(data.password != undefined){
+        if(data.password == config.password){
+          peopleInside = peopleInside - data.value;
+          logger.info(`${date.toString()} / exitedWhileDisconnected from:${data.nomSmartphone} / ${data.value} exited while server was disconnected. Now ${peopleInside} people inside`);
+          checkMinPeopleInside();
+          socket.emit('peopleInside', {peopleInside});
+          socket.broadcast.emit('peopleInside', {"peopleInside": peopleInside});
+        }
+      }else{
+        peopleInside = peopleInside - data;
+        logger.info(`${date.toString()} / exitedWhileDisconnected / ${data} exited while server was disconnected. Now ${peopleInside} people inside`);
+        checkMinPeopleInside();
+        socket.emit('peopleInside', {peopleInside});
+        socket.broadcast.emit('peopleInside', {"peopleInside": peopleInside});
+      }
     }
   });
 

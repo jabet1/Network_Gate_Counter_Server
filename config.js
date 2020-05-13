@@ -1,5 +1,5 @@
 module.exports = {
   password :  'password',
   port : 3000,
-  maxPeopleInside : 20,   //trigger alert on phone and logs files
+  maxPeopleInside : 50,   //trigger alert on phone and logs files
 };

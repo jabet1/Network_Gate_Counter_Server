@@ -25,17 +25,17 @@ fs.readdir('./log/', (err, files) => { //get old value
       peopleInside = 0;
       return true;
     }
-    while(contents.split('\n').slice(-i-1, -i)[0].split(" ").includes('{"message":"ERROR') || contents.split('\n').slice(-i-1, -i)[0].split(" ").includes('exitedWhileDisconnected')){
+    console.log()
+    while(contents.split('\n').slice(-i-1, -i)[0].split('"').slice(-2,-1)[0] != "info"){
       i++;
       if(i > contents.split('\n').length-2){
         peopleInside = 0;
         return true;
       }
     }
-    if (!contents.split('\n').slice(-i-1, -i)[0].split(" ").includes('{"message":"ERROR')) {
-      let array = contents.split('\n').slice(-i-1, -i)[0].split(" ");
-      peopleInside = Number(array[array.findIndex((e) => e == 'people') - 1]);
-      peopleInside = peopleInside < 0  ? 0 : peopleInside;
+    peopleInside = Number(contents.split('\n').slice(-i-1, -i)[0].split('"').slice(-6,-5)[0].split(':').slice(-1)[0])
+    if(!Number.isInteger(peopleInside)){
+      peopleInside = 0;
     }
   });
 });
@@ -65,7 +65,7 @@ var logger = winston.createLogger({ //create 2 logs files
 const checkMaxPeopleInside = () => {
   if(peopleInside > config.maxPeopleInside){
     const date = new Date();
-    logger.error(`ERROR : Max people inside (${config.maxPeopleInside}) exceeded : ${peopleInside} people inside at ${date.toString()}`)
+    logger.error(`ERROR :Max_people_inside(${config.maxPeopleInside})exceeded/at_${date.toString()}_people_inside:${peopleInside}`)
   }
 }
 const checkMinPeopleInside = () =>{
@@ -93,16 +93,7 @@ io.on('connection', (socket) => {
           peopleInside = peopleInside + 1
           socket.emit('peopleInside', {"peopleInside": peopleInside});
           socket.broadcast.emit('peopleInside', {"peopleInside": peopleInside});
-          logger.info(`${date.toString()} / enter from :${data.nomSmartphone} / ${peopleInside} people inside`);
-          checkMaxPeopleInside();
-        }
-      }else{
-        if(data == config.password){
-          const date = new Date();
-          peopleInside = peopleInside + 1
-          socket.emit('peopleInside', {"peopleInside": peopleInside});
-          socket.broadcast.emit('peopleInside', {"peopleInside": peopleInside});
-          logger.info(`${date.toString()} / enter / ${peopleInside} people inside`);
+          logger.info(`${date.toString()}/enter_from:${data.nomSmartphone}/ip:${socket.request.connection.remoteAddress}/people_inside:${peopleInside}`);
           checkMaxPeopleInside();
         }
       }
@@ -118,16 +109,7 @@ io.on('connection', (socket) => {
           checkMinPeopleInside();
           socket.emit('peopleInside', {"peopleInside": peopleInside});
           socket.broadcast.emit('peopleInside', {"peopleInside": peopleInside});
-          logger.info(`${date.toString()} / exit from :${data.nomSmartphone} / ${peopleInside} people inside`);
-        }
-      }else{
-        if(data == config.password){
-          const date = new Date();
-          peopleInside = peopleInside - 1
-          checkMinPeopleInside();
-          socket.emit('peopleInside', {"peopleInside": peopleInside});
-          socket.broadcast.emit('peopleInside', {"peopleInside": peopleInside});
-          logger.info(`${date.toString()} / exit / ${peopleInside} people inside`);
+          logger.info(`${date.toString()}/exit_from:${data.nomSmartphone}/ip:${socket.request.connection.remoteAddress}/people_inside:${peopleInside}`);
         }
       }
     }
@@ -137,18 +119,12 @@ io.on('connection', (socket) => {
     if(data != undefined){
       if(data.password != undefined){
         if(data.password == config.password){
-          peopleInside = peopleInside - data.value;
-          logger.info(`${date.toString()} / exitedWhileDisconnected from:${data.nomSmartphone} / ${data.value} exited while server was disconnected. Now ${peopleInside} people inside`);
+          peopleInside = peopleInside - Number(data.value);
+          logger.info(`${date.toString()}/exitedWhileDisconnected_from:${data.nomSmartphone}/ip:${socket.request.connection.remoteAddress}/${data.value}exited_while_disconnected/people_inside:${peopleInside}`);
           checkMinPeopleInside();
           socket.emit('peopleInside', {peopleInside});
           socket.broadcast.emit('peopleInside', {"peopleInside": peopleInside});
         }
-      }else{
-        peopleInside = peopleInside - data;
-        logger.info(`${date.toString()} / exitedWhileDisconnected / ${data} exited while server was disconnected. Now ${peopleInside} people inside`);
-        checkMinPeopleInside();
-        socket.emit('peopleInside', {peopleInside});
-        socket.broadcast.emit('peopleInside', {"peopleInside": peopleInside});
       }
     }
   });
